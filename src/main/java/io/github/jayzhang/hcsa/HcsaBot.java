@@ -40,7 +40,7 @@ public class HcsaBot extends ActivityHandler {
     	List<SMiningResult> list = sminer.extractTargets(input);
     	if(list == null ||list.size() == 0)
     	{
-    		sb.append("我分析不出来，请换句话试试:(");
+    		sb.append("对不起，我分析不出来，请换句话试试:(");
     	}
     	else 
     	{
@@ -63,7 +63,7 @@ public class HcsaBot extends ActivityHandler {
             .filter(
                 member -> !StringUtils
                     .equals(member.getId(), turnContext.getActivity().getRecipient().getId())
-            ).map(channel -> turnContext.sendActivity(MessageFactory.text("Hello and welcome!")))
+            ).map(channel -> turnContext.sendActivity(MessageFactory.text("欢迎使用酒店评论情感分析系统，请输入你的评论。")))
             .collect(CompletableFutures.toFutureList()).thenApply(resourceResponses -> null);
     }
 }
