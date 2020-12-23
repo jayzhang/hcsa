@@ -10,12 +10,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher ;
+import java.util.regex.Pattern ;
 
-import org.apache.oro.text.regex.MalformedPatternException;
-import org.apache.oro.text.regex.MatchResult;
-import org.apache.oro.text.regex.PatternMatcherInput;
-import org.apache.oro.text.regex.Perl5Compiler;
-import org.apache.oro.text.regex.Perl5Matcher;
 import org.springframework.stereotype.Component;
 
 import io.github.jayzhang.ac.Emit;
@@ -56,10 +53,7 @@ public class SMiner {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (MalformedPatternException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		}  
 	}
 	
 	public List<Emit> splitSentence(String text)
@@ -191,7 +185,7 @@ public class SMiner {
         return lines;
     }
 	
-	private void parseLine(String text) throws MalformedPatternException
+	private void parseLine(String text)  
 	{
 		if(text.contains("<=")) // assertion
 		{
@@ -245,7 +239,7 @@ public class SMiner {
 			String value = parseExpression(right);
 			RegexAssertion assertion = new RegexAssertion();
 			assertion.orgPattern = arr[1];
-			assertion.pattern = new  Perl5Compiler().compile(value); 
+			assertion.pattern = Pattern.compile(value); 
 			assertion.property = HotelProperties.valueOf(arr2[0]).getValue();
 			assertion.rate = Rates.valueOf(arr2[1]).getValue();
 			assertions.add(assertion);
@@ -276,7 +270,7 @@ public class SMiner {
 		}
 	}
 	
-	public boolean load(String file) throws IOException, MalformedPatternException
+	public boolean load(String file) throws IOException
 	{
 		List<String> lines = loadClassPathFileToLines(file);
 		for(String line : lines)
@@ -334,37 +328,34 @@ public class SMiner {
 			for(Integer index : assertSet)
 			{
 				RegexAssertion pattern = assertions.get(index);
-				PatternMatcherInput matcherInput = new  PatternMatcherInput( span.pattern );
-				Perl5Matcher matcher = new  Perl5Matcher();	    
-			    while  (matcher.contains(matcherInput,   pattern.pattern)) {    
-			        MatchResult matchResult = matcher.getMatch();
-			        String matchText = matchResult.toString();
-			        if(matchText.length() > 0)
-			        {
-			        	int localStart = matchResult.beginOffset(0);
-			        	int localEnd = matchResult.endOffset(0);
-			        	String preffix = span.pattern.substring(0, localStart);
+				Matcher matcher = pattern.pattern.matcher(span.pattern);
+				
+				while (matcher.find()) {
+					String matchText = matcher.group();
+					int localStart = matcher.start();
+					int localEnd = matcher.end();
+				     
+					String preffix = span.pattern.substring(0, localStart);
+		        	
+		        	if( !(preffix.contains("不是") || preffix.contains("不算")) )
+		        	{
+		        		SMiningResult miningResult = new SMiningResult();
+			        	miningResult.matchText = matchText;
+			        	miningResult.matchPattern = pattern.orgPattern;
+			        	miningResult.property = pattern.property;
+			        	miningResult.rate = pattern.rate;
+			        	miningResult.begin = span.start + localStart;
+			        	miningResult.end = span.start + localEnd;
 			        	
-			        	if( !(preffix.contains("不是") || preffix.contains("不算")) )
+			        	String key = miningResult.property + "-" + miningResult.begin + "-" + miningResult.end + "-" + miningResult.rate;
+			        	
+			        	if(!set.contains(key))
 			        	{
-			        		SMiningResult miningResult = new SMiningResult();
-				        	miningResult.matchText = matchText;
-				        	miningResult.matchPattern = pattern.orgPattern;
-				        	miningResult.property = pattern.property;
-				        	miningResult.rate = pattern.rate;
-				        	miningResult.begin = span.start + localStart;
-				        	miningResult.end = span.start + localEnd;
-				        	
-				        	String key = miningResult.property + "-" + miningResult.begin + "-" + miningResult.end + "-" + miningResult.rate;
-				        	
-				        	if(!set.contains(key))
-				        	{
-				        		results.add(miningResult);
-				        		set.add(key);
-				        	}
+			        		results.add(miningResult);
+			        		set.add(key);
 			        	}
-			        }
-			    }   
+		        	}
+				}
 			}
 		}
 		return results;
@@ -375,7 +366,7 @@ public class SMiner {
 	 * @throws MalformedPatternException 
 	 * @throws IOException 
 	 */
-	public static void main(String[] args) throws IOException, MalformedPatternException {
+	public static void main(String[] args) throws IOException {
 		// TODO Auto-generated method stub
 		
 		SMiner miner = new SMiner();

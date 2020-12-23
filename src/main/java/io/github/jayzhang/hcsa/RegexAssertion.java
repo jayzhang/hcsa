@@ -1,6 +1,6 @@
 package io.github.jayzhang.hcsa;
 
-import org.apache.oro.text.regex.Pattern;
+import java.util.regex.Pattern;
 
 public class RegexAssertion {
 	public Pattern pattern;
@@ -10,7 +10,7 @@ public class RegexAssertion {
 	
 	public String toString()
 	{
-		return "RegexPattern[" + pattern.getPattern() + "/property=" + property 
+		return "RegexPattern[" + pattern.pattern() + "/property=" + property 
 				+ ", rate=" + rate + ", orgPattern:" + orgPattern + "]";
 	}
 }

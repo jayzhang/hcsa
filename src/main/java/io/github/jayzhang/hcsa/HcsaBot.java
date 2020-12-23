@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +30,8 @@ import com.microsoft.bot.schema.ChannelAccount;
 @Component
 public class HcsaBot extends ActivityHandler {
 
+	static Logger log = LoggerFactory.getLogger(HcsaBot.class);
+	
 	@Autowired
 	SMiner sminer;
 	
@@ -35,20 +39,28 @@ public class HcsaBot extends ActivityHandler {
     protected CompletableFuture<Void> onMessageActivity(TurnContext turnContext) {
     	
     	String input = turnContext.getActivity().getText();
+    	log.info("input:{}", input);
     	StringBuilder sb = new StringBuilder();
+    	try
+    	{
+    		List<SMiningResult> list = sminer.extractTargets(input);
+        	if(list == null ||list.size() == 0)
+        	{
+        		sb.append("对不起，我分析不出来，请换句话试试:(");
+        	}
+        	else 
+        	{
+        		for(SMiningResult result : list)
+        		{
+        			sb.append(result.toString()).append("\n");
+        		}
+        	}
+    	}
+    	catch(Exception e)
+    	{
+    		sb.append(e.toString());
+    	}
     	
-    	List<SMiningResult> list = sminer.extractTargets(input);
-    	if(list == null ||list.size() == 0)
-    	{
-    		sb.append("对不起，我分析不出来，请换句话试试:(");
-    	}
-    	else 
-    	{
-    		for(SMiningResult result : list)
-    		{
-    			sb.append(result.toString()).append("\n");
-    		}
-    	}
         return turnContext.sendActivity(
             MessageFactory.text(sb.toString())
         ).thenApply(sendResult -> null);
