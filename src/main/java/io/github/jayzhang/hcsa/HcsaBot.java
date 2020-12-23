@@ -50,10 +50,21 @@ public class HcsaBot extends ActivityHandler {
         	}
         	else 
         	{
+        		int rate = 0;
         		for(SMiningResult result : list)
         		{
+        			if(result.rate == Rates.BAD.getValue())
+        				-- rate;
+        			else if(result.rate == Rates.GOOD.getValue())
+        				++ rate;
         			sb.append(result.toString()).append("\n");
-        		}
+        		} 
+        		String overall = "neutral";
+        		if(rate >0) 
+        			overall = "positive";
+        		else if(rate <0)
+        			overall = "negative";
+        		sb.append("\n--------------------overall rate: ").append(overall).append("--------------------");
         	}
     	}
     	catch(Exception e)
